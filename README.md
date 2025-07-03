@@ -8,16 +8,18 @@ A simple tool to manage multiple AWS accounts with SSO support and easy account 
 
 `Kee` creates isolated sub-shells for each AWS account, ensuring no credentials are stored locally while providing seamless account management.
 
-This is a **Rust** implementation of `kee.py` ([Python implementation](https://github.com/KeeCLI/kee.rs)), providing identical functionality to the Python version with the performance and safety benefits of Rust, while maintaining complete compatibility with existing configurations and workflows.
+🦀 — This is the **Rust** implementation of the original [Python implementation](https://github.com/KeeCLI/kee.py), providing identical functionality with the performance and safety benefits of Rust, while maintaining complete compatibility with existing configurations and workflows.
 
 
-## 🦀 Why Rust?
+## Why Rust?
 
 - 🚀 **Performance**: Compiled binary, faster startup times
 - ⛑️ **Memory safety**: No runtime errors, guaranteed memory safety
-- 📊 **Cross-platform**: Single binary works across platforms
+- 🌍 **Cross-platform**: Single binary works across platforms
 - 👌 **Zero dependencies**: No Python runtime required
 - ⚡️ **Concurrent**: Built-in concurrency support for future enhancements
+
+> For a list of features, take a look a the [Python implementation](https://github.com/KeeCLI/kee.py).
 
 ## Installation
 
@@ -34,17 +36,36 @@ git clone https://github.com/keecli/kee.rs.git ~/.kee
 
 ### Build and install
 
+**Option 1: Automated (recommended)**
+```bash
+cd ~/.kee
+./install.sh
+```
+> This script will build an optimized `Kee` binary, install it (in `~/.cargo/bin`), and add the folder to your `PATH`.
+
+**Option 2: Manual**
 ```bash
 cd ~/.kee
 
-# Build the release binary
-cargo build --release
-
-# Install globally
+# Install the binary
 cargo install --path .
 
-# Or copy the binary to your PATH
-cp target/release/kee ~/.local/bin/
+# Add Cargo's bin directory to your PATH
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc  # For zsh (macOS default)
+# OR
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc  # For bash
+
+# Reload your shell configuration
+source ~/.zshrc  # or ~/.bashrc
+```
+
+**Option 3: Direct copy**
+```bash
+cd ~/.kee
+
+# Build and copy to a directory already in PATH
+cargo build --release
+cp target/release/kee ~/.local/bin/  # Make sure ~/.local/bin is in your PATH
 ```
 
 ## Feature comparison
@@ -86,7 +107,7 @@ kee remove mycompany.dev
 kee --help
 ```
 
-## 🔧 Development
+## Development
 
 ### Building
 ```bash
@@ -114,7 +135,7 @@ cargo clippy
 | **Binary size** | N/A | ~8MB | Single file |
 
 
-## 🌍 Cross-platform support
+## Cross-platform support
 
 **Identical support across:**
 - **macOS**: Full support with shell prompt integration
