@@ -10,7 +10,6 @@ use std::process::Command;
 const BOLD_WHITE: &str = "\x1b[1;37m";
 const RESET: &str = "\x1b[0m";
 const KEE_ART: &str = r#"
-
     ██╗  ██╗███████╗███████╗
     ██║ ██╔╝██╔════╝██╔════╝
     █████╔╝ █████╗  █████╗
@@ -486,7 +485,6 @@ impl KeeManager {
         println!("    Session: {}", hlt(account_name));
         println!("\n    Starting a sub-shell for this session...");
         println!("    Type '{}' to return to your main shell.", hlt("exit"));
-        println!();
 
         // Start subshell with environment
         let mut cmd = Command::new(&shell);

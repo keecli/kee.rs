@@ -10,7 +10,6 @@ A simple tool to manage multiple AWS accounts with SSO support and easy account 
 
 🦀 — This is the **Rust** implementation of the original [Python implementation](https://github.com/KeeCLI/kee.py), providing identical functionality with the performance and safety benefits of Rust, while maintaining complete compatibility with existing configurations and workflows.
 
-
 ## Why Rust?
 
 - 🚀 **Performance**: Compiled binary, faster startup times
@@ -24,6 +23,7 @@ A simple tool to manage multiple AWS accounts with SSO support and easy account 
 ## Installation
 
 ### Prerequisites
+
 - Rust 1.80+ (install from [rustup.rs](https://rustup.rs/)) (On Mac with brew: `brew install rust`)
 - AWS CLI v2 installed and configured
 - Access to AWS SSO
@@ -37,13 +37,16 @@ git clone https://github.com/keecli/kee.rs.git ~/.kee
 ### Build and install
 
 **Option 1: Automated (recommended)**
+
 ```bash
 cd ~/.kee
 ./install.sh
 ```
+
 > This script will build an optimized `Kee` binary, install it (in `~/.cargo/bin`), and add the folder to your `PATH`.
 
 **Option 2: Manual**
+
 ```bash
 cd ~/.kee
 
@@ -60,6 +63,7 @@ source ~/.zshrc  # or ~/.bashrc
 ```
 
 **Option 3: Direct copy**
+
 ```bash
 cd ~/.kee
 
@@ -70,20 +74,20 @@ cp target/release/kee ~/.local/bin/  # Make sure ~/.local/bin is in your PATH
 
 ## Feature comparison
 
-| Feature | Python Version | Rust Version | Notes |
-|---------|---------------|--------------|-------|
-| **SSO integration** | ✅ | ✅ | Identical AWS CLI integration |
-| **Sub-shell isolation** | ✅ | ✅ | Same environment management |
-| **Account management** | ✅ | ✅ | Add, use, list, remove accounts |
-| **Session management** | ✅ | ✅ | Prevents nested sessions |
-| **Config file format** | ✅ | ✅ | Same JSON structure |
-| **AWS config management** | ✅ | ✅ | Same file handling |
-| **Cross-platform** | ✅ | ✅ | Windows, macOS, Linux |
-| **Error handling** | ✅ | ✅ | Comprehensive error management |
-| **Performance** | Good | **Excellent** | Compiled binary |
-| **Memory usage** | Higher | **Lower** | No runtime overhead |
-| **Startup time** | ~100ms | **~5ms** | No interpreter startup |
-| **Binary size** | N/A | **~1.5MB** | Single executable |
+| Feature                   | Python Version | Rust Version  | Notes                           |
+| ------------------------- | -------------- | ------------- | ------------------------------- |
+| **SSO integration**       | ✅             | ✅            | Identical AWS CLI integration   |
+| **Sub-shell isolation**   | ✅             | ✅            | Same environment management     |
+| **Account management**    | ✅             | ✅            | Add, use, list, remove accounts |
+| **Session management**    | ✅             | ✅            | Prevents nested sessions        |
+| **Config file format**    | ✅             | ✅            | Same JSON structure             |
+| **AWS config management** | ✅             | ✅            | Same file handling              |
+| **Cross-platform**        | ✅             | ✅            | Windows, macOS, Linux           |
+| **Error handling**        | ✅             | ✅            | Comprehensive error management  |
+| **Performance**           | Good           | **Excellent** | Compiled binary                 |
+| **Memory usage**          | Higher         | **Lower**     | No runtime overhead             |
+| **Startup time**          | ~100ms         | **~5ms**      | No interpreter startup          |
+| **Binary size**           | N/A            | **~1.5MB**    | Single executable               |
 
 ## Usage
 
@@ -110,6 +114,7 @@ kee --help
 ## Development
 
 ### Building
+
 ```bash
 # Debug build
 cargo build
@@ -127,21 +132,23 @@ cargo clippy
 
 ## Performance benchmarks
 
-| Operation | Python | Rust | Improvement |
-|-----------|---------------|--------------|-------------|
-| **Startup** | ~100ms | ~5ms | **20x faster** |
-| **Config load** | ~10ms | ~1ms | **10x faster** |
-| **Memory usage** | ~25MB | ~2MB | **12x less** |
-| **Binary size** | N/A | ~1.5MB | Single file |
+| Operation        | Python | Rust   | Improvement    |
+| ---------------- | ------ | ------ | -------------- |
+| **Startup**      | ~100ms | ~5ms   | **20x faster** |
+| **Config load**  | ~10ms  | ~1ms   | **10x faster** |
+| **Memory usage** | ~25MB  | ~2MB   | **12x less**   |
+| **Binary size**  | N/A    | ~1.5MB | Single file    |
 
 ## Cross-platform support
 
 **Identical support across:**
+
 - **macOS**: Full support with shell prompt integration
 - **Linux**: Full support with shell prompt integration
 - **Windows**: Full support (prompt integration not available)
 
 **Platform-specific optimizations:**
+
 - **Windows**: Uses `COMSPEC` for shell detection
 - **Unix**: Uses `SHELL` environment variable
 - **All**: Proper path handling with `std::path`
@@ -149,12 +156,14 @@ cargo clippy
 ## Migration from the Python version
 
 **Zero migration required:**
+
 - Same configuration files (`~/.aws/kee.json`)
 - Same AWS config format
 - Same command-line interface
 - Same environment variables
 
 **Drop-in Replacement:**
+
 ```bash
 # Remove the Python version
 rm /usr/local/bin/kee
@@ -178,12 +187,14 @@ cargo install --path . --force
 ## Distribution
 
 **Binary distribution:**
+
 - Single executable file
 - No runtime dependencies
 - Easy deployment to servers
 - Container-friendly
 
 **Package managers:**
+
 - **Cargo**: `cargo install kee`
 - **Homebrew**: `brew install kee` (when published)
 - **Scoop**: `scoop install kee` (Windows, when published)
@@ -200,6 +211,7 @@ Same contribution guidelines as Python version, plus:
 5. Submit a pull request
 
 **Rust-specific:**
+
 - Follow `rustfmt` formatting
 - Pass `clippy` lints
 
@@ -216,4 +228,8 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-For issues, questions, or contributions, please visit the project repository or create an issue.
+RTFM, then RTFC... If you are still stuck or just need an additional feature, file an [issue](https://github.com/KeeCLI/kee.py/issues).
+
+<div align="center">
+✌🏼
+</div>
