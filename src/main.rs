@@ -105,7 +105,7 @@ impl KeeManager {
     }
 
     fn add_account(&self, account_name: &str) -> io::Result<bool> {
-        let profile_name = format!("kee-{account_name}");
+        let profile_name = account_name;
 
         println!("\n Starting SSO configuration...");
         println!(" (This will open your browser to complete authentication.)");
@@ -128,7 +128,7 @@ impl KeeManager {
 
         // Run aws configure sso
         let status = Command::new("aws")
-            .args(["configure", "sso", "--profile", &profile_name])
+            .args(["configure", "sso", "--profile", profile_name])
             .status()?;
 
         if !status.success() {
@@ -146,7 +146,7 @@ impl KeeManager {
         self.reformat_config_file()?;
 
         // Read profile info
-        let profile_info = match self.read_profile_info(&profile_name) {
+        let profile_info = match self.read_profile_info(profile_name) {
             Some(info) => info,
             None => {
                 println!(" [X] Could not read profile information.");
@@ -162,7 +162,7 @@ impl KeeManager {
         self.save_config(&config)?;
 
         // Test the profile
-        if self.check_credentials(&profile_name) {
+        if self.check_credentials(profile_name) {
             println!("\n [✓] The account was added and is working correctly! — I just tested it.");
         } else {
             println!("\n [X] I created the profile but credentials may need a refresh...");
@@ -406,6 +406,7 @@ impl KeeManager {
 
         let account_info = config.accounts.get(account_name).unwrap();
         let profile_name = &account_info.profile_name;
+        let profile_region = &account_info.region;
 
         // Check credentials
         if !self.check_credentials(profile_name) {
@@ -424,7 +425,7 @@ impl KeeManager {
         self.save_config(&config)?;
 
         // Start subshell
-        self.start_subshell(account_name, profile_name)?;
+        self.start_subshell(account_name, profile_name, profile_region)?;
 
         // Clear current account when subshell exits
         config.current_account = None;
@@ -467,7 +468,12 @@ impl KeeManager {
         Ok(status.success())
     }
 
-    fn start_subshell(&self, account_name: &str, profile_name: &str) -> io::Result<()> {
+    fn start_subshell(
+        &self,
+        account_name: &str,
+        profile_name: &str,
+        profile_region: &str,
+    ) -> io::Result<()> {
         // Get current shell
         let shell = if cfg!(windows) {
             env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string())
@@ -485,6 +491,7 @@ impl KeeManager {
         // Start subshell with environment
         let mut cmd = Command::new(&shell);
         cmd.env("AWS_PROFILE", profile_name);
+        cmd.env("AWS_REGION", profile_region);
         cmd.env("KEE_CURRENT_ACCOUNT", account_name);
         cmd.env("KEE_ACTIVE_SESSION", "1");
 
