@@ -65,7 +65,7 @@ impl KeeConfig {
 }
 
 pub fn format_profile_name(account_name: &str) -> String {
-    format!("kee-{}", account_name)
+    format!("kee-{account_name}")
 }
 
 pub fn parse_aws_config_section(
@@ -74,7 +74,7 @@ pub fn parse_aws_config_section(
 ) -> Option<HashMap<String, String>> {
     let mut in_section = false;
     let mut section_data = HashMap::new();
-    let target_section = format!("[{}]", section_name);
+    let target_section = format!("[{section_name}]");
 
     for line in content.lines() {
         let line = line.trim();

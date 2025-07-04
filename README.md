@@ -24,7 +24,7 @@ A simple tool to manage multiple AWS accounts with SSO support and easy account 
 ## Installation
 
 ### Prerequisites
-- Rust 1.70+ (install from [rustup.rs](https://rustup.rs/)) (On Mac with brew: `brew install rust`)
+- Rust 1.80+ (install from [rustup.rs](https://rustup.rs/)) (On Mac with brew: `brew install rust`)
 - AWS CLI v2 installed and configured
 - Access to AWS SSO
 

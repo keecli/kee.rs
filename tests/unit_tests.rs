@@ -23,8 +23,12 @@ fn test_help_command() {
 
 #[test]
 fn test_list_command_no_accounts() {
+    let temp_dir = std::env::temp_dir().join("kee_test_no_accounts");
+    std::fs::create_dir_all(&temp_dir).unwrap();
+
     let output = Command::new("cargo")
         .args(&["run", "--", "list"])
+        .env("HOME", &temp_dir)
         .output()
         .expect("Failed to execute list command");
 
@@ -33,6 +37,9 @@ fn test_list_command_no_accounts() {
 
     // Should show message about no accounts configured
     assert!(stdout.contains("No accounts configured"));
+
+    // Clean up
+    std::fs::remove_dir_all(&temp_dir).ok();
 }
 
 #[test]
