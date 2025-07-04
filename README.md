@@ -83,7 +83,7 @@ cp target/release/kee ~/.local/bin/  # Make sure ~/.local/bin is in your PATH
 | **Performance** | Good | **Excellent** | Compiled binary |
 | **Memory usage** | Higher | **Lower** | No runtime overhead |
 | **Startup time** | ~100ms | **~5ms** | No interpreter startup |
-| **Binary size** | N/A | **~8MB** | Single executable |
+| **Binary size** | N/A | **~1.5MB** | Single executable |
 
 ## Usage
 
@@ -132,8 +132,7 @@ cargo clippy
 | **Startup** | ~100ms | ~5ms | **20x faster** |
 | **Config load** | ~10ms | ~1ms | **10x faster** |
 | **Memory usage** | ~25MB | ~2MB | **12x less** |
-| **Binary size** | N/A | ~8MB | Single file |
-
+| **Binary size** | N/A | ~1.5MB | Single file |
 
 ## Cross-platform support
 
@@ -204,11 +203,16 @@ Same contribution guidelines as Python version, plus:
 - Follow `rustfmt` formatting
 - Pass `clippy` lints
 
+> There is a utilities script which will set up a `pre-commit` hook to run some basic checks on your code before you commit.
+
+```bash
+cd ~/.kee
+./utilities/githooks.sh
+```
 
 ## License
 
 MIT License - see LICENSE file for details.
-
 
 ## Support
 
