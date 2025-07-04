@@ -247,7 +247,7 @@ impl KeeManager {
 
         if config.accounts.is_empty() {
             println!(
-                " No accounts configured. Use '{}' to add an account.",
+                "\n No accounts configured. Use '{}' to add an account.",
                 hlt("kee add <account_name>")
             );
             return;

@@ -1,7 +1,7 @@
 [package]
 name = "kee"
 version = "1.0.0"
-edition = "2021"
+edition = "2024"
 description = "AWS CLI session manager with SSO support"
 authors = ["Stefan Aichholzer <theaichholzer@gmail.com>"]
 license = "MIT"
