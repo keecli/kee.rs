@@ -49,7 +49,6 @@ struct AccountInfo {
     sso_region: String,
     sso_account_id: String,
     sso_role_name: String,
-    region: String,
     session_name: String,
 }
 
@@ -114,7 +113,10 @@ impl KeeManager {
         println!("  {} Authenticate in your browser", hlt("3."));
         println!("  {} Select your AWS account", hlt("4."));
         println!("  {} Select your role", hlt("5."));
-        println!("  {} Choose your default region", hlt("6."));
+        println!(
+            "  {} Choose your output format (recommend: json)",
+            hlt("6.")
+        );
         println!(
             "  {} Choose your output format (recommend: json)",
             hlt("7.")
@@ -185,11 +187,6 @@ impl KeeManager {
 
         let sso_account_id = section.get("sso_account_id")?.as_ref()?.clone();
         let sso_role_name = section.get("sso_role_name")?.as_ref()?.clone();
-        let region = section
-            .get("region")
-            .and_then(|s| s.as_ref())
-            .cloned()
-            .unwrap_or_else(|| "us-east-1".to_string());
 
         let session_name = section
             .get("sso_session")
@@ -236,7 +233,6 @@ impl KeeManager {
             sso_region,
             sso_account_id,
             sso_role_name,
-            region,
             session_name,
         })
     }
@@ -261,13 +257,7 @@ impl KeeManager {
             };
 
             println!(" {}{}", hlt(account_name), status);
-            println!(
-                " • {} {} | {} {}",
-                hlt("Account:"),
-                account_info.sso_account_id,
-                hlt("Region:"),
-                account_info.region
-            );
+            println!(" • {} {}", hlt("Account:"), account_info.sso_account_id);
             println!(" • {} {}", hlt("Role:"), account_info.sso_role_name);
             println!();
         }
@@ -405,7 +395,6 @@ impl KeeManager {
 
         let account_info = config.accounts.get(account_name).unwrap();
         let profile_name = &account_info.profile_name;
-        let profile_region = &account_info.region;
 
         // Check credentials
         if !self.check_credentials(profile_name) {
@@ -424,7 +413,7 @@ impl KeeManager {
         self.save_config(&config)?;
 
         // Start subshell
-        self.start_subshell(account_name, profile_name, profile_region)?;
+        self.start_subshell(account_name, profile_name)?;
 
         // Clear current account when subshell exits
         config.current_account = None;
@@ -467,12 +456,7 @@ impl KeeManager {
         Ok(status.success())
     }
 
-    fn start_subshell(
-        &self,
-        account_name: &str,
-        profile_name: &str,
-        profile_region: &str,
-    ) -> io::Result<()> {
+    fn start_subshell(&self, account_name: &str, profile_name: &str) -> io::Result<()> {
         // Get current shell
         let shell = if cfg!(windows) {
             env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string())
@@ -489,7 +473,6 @@ impl KeeManager {
         // Start subshell with environment
         let mut cmd = Command::new(&shell);
         cmd.env("AWS_PROFILE", profile_name);
-        cmd.env("AWS_REGION", profile_region);
         cmd.env("KEE_CURRENT_ACCOUNT", account_name);
         cmd.env("KEE_ACTIVE_SESSION", "1");
 

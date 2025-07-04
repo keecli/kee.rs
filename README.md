@@ -1,14 +1,30 @@
 <div align="center">
-  <img src="https://github.com/KeeCLI/kee.rs/blob/main/kee.png" alt="Kee" />
+  <img src="https://raw.githubusercontent.com/keecli/kee.rs/refs/heads/main/kee.png" alt="Kee" />
 </div>
 
 ![OSX](https://img.shields.io/badge/-OSX-black) ![OSX](https://img.shields.io/badge/-Linux-red) ![OSX](https://img.shields.io/badge/-Windows-blue)
 
-A simple tool to manage multiple AWS accounts with SSO support and easy account access.
-
 `Kee` creates isolated sub-shells for each AWS account, ensuring no credentials are stored locally while providing seamless account management.
 
-🦀 — This is the **Rust** implementation of the original [Python implementation](https://github.com/KeeCLI/kee.py), providing identical functionality with the performance and safety benefits of Rust, while maintaining complete compatibility with existing configurations and workflows.
+## Features
+
+- 🔐 **SSO integration**: Full support for AWS SSO authentication
+- 🚀 **Easy account access**: Use any configured account with a single command
+- 🐚 **Sub-shell isolation**: Each account runs in its own sub-shell with proper credential isolation
+- 📝 **Custom aliases**: Use friendly names for your AWS accounts
+- 🔍 **Account management**: Easily list, add, and remove accounts
+- 🚫 **No stored credentials**: No AWS credentials are stored anywhere - uses AWS SSO tokens
+- 🎨 **Shell integration**: Shows current account in your shell prompt
+- ⚡ **Auto-refresh**: Automatically handles SSO token refresh when needed
+
+🐍 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/keecli/kee.py).
+
+## Security notes
+
+- **No credential storage**: `Kee` never stores AWS access keys or secrets
+- **SSO token management**: Uses AWS CLI's built-in SSO token caching
+- **Sub-shell isolation**: Each account session is isolated in its own shell
+- **Automatic cleanup**: Environment variables are cleared when exiting sub-shells
 
 ## Why Rust?
 
@@ -17,8 +33,6 @@ A simple tool to manage multiple AWS accounts with SSO support and easy account 
 - 🌍 **Cross-platform**: Single binary works across platforms
 - 👌 **Zero dependencies**: No Python runtime required
 - ⚡️ **Concurrent**: Built-in concurrency support for future enhancements
-
-> For a list of features, take a look a the [Python implementation](https://github.com/KeeCLI/kee.py).
 
 ## Installation
 
@@ -72,110 +86,217 @@ cargo build --release
 cp target/release/kee ~/.local/bin/  # Make sure ~/.local/bin is in your PATH
 ```
 
-## Feature comparison
+## Quick Start
 
-| Feature                   | Python Version | Rust Version  | Notes                           |
-| ------------------------- | -------------- | ------------- | ------------------------------- |
-| **SSO integration**       | ✅             | ✅            | Identical AWS CLI integration   |
-| **Sub-shell isolation**   | ✅             | ✅            | Same environment management     |
-| **Account management**    | ✅             | ✅            | Add, use, list, remove accounts |
-| **Session management**    | ✅             | ✅            | Prevents nested sessions        |
-| **Config file format**    | ✅             | ✅            | Same JSON structure             |
-| **AWS config management** | ✅             | ✅            | Same file handling              |
-| **Cross-platform**        | ✅             | ✅            | Windows, macOS, Linux           |
-| **Error handling**        | ✅             | ✅            | Comprehensive error management  |
-| **Performance**           | Good           | **Excellent** | Compiled binary                 |
-| **Memory usage**          | Higher         | **Lower**     | No runtime overhead             |
-| **Startup time**          | ~100ms         | **~5ms**      | No interpreter startup          |
-| **Binary size**           | N/A            | **~1.5MB**    | Single executable               |
-
-## Usage
+### 1. Add Your First Account
 
 ```bash
-# Add an account
 kee add mycompany.dev
-
-# Use an account
-kee use mycompany.dev
-
-# List accounts
-kee list
-
-# Show current account
-kee current
-
-# Remove an account
-kee remove mycompany.dev
-
-# Help
-kee --help
 ```
 
-## Development
+This will:
 
-### Building
+- Run `aws configure sso --profile company.dev`
+- Prompt you for your SSO configuration (start URL, region, etc.)
+- Open your browser for SSO authentication
+- Let you select your AWS account and role interactively
+- Automatically save the configuration to `Kee`
+
+### 2. Use an Account
 
 ```bash
-# Debug build
-cargo build
-
-# Release build (optimized)
-cargo build --release
-
-# Run tests
-cargo test
-
-# Check code
-cargo check
-cargo clippy
+kee use mycompany.dev
 ```
 
-## Performance benchmarks
+This will:
 
-| Operation        | Python | Rust   | Improvement    |
-| ---------------- | ------ | ------ | -------------- |
-| **Startup**      | ~100ms | ~5ms   | **20x faster** |
-| **Config load**  | ~10ms  | ~1ms   | **10x faster** |
-| **Memory usage** | ~25MB  | ~2MB   | **12x less**   |
-| **Binary size**  | N/A    | ~1.5MB | Single file    |
+- Check if SSO credentials are valid
+- Automatically run `aws sso login` if needed
+- Start a sub-shell with AWS credentials configured
+- Update your shell prompt to show the active account
+
+### 3. Work with AWS
+
+Inside the sub-shell, all AWS CLI commands will use the selected account:
+
+```bash
+(mycompany.dev) $ aws s3 ls
+(mycompany.dev) $ aws ec2 describe-instances
+(mycompany.dev) $ exit  # Terminate the session and return to your main shell
+```
+
+## Commands
+
+### Add an account
+
+```bash
+kee add <account_name>
+```
+
+Interactively configure a new AWS account with SSO settings.
+
+### Use an account
+
+```bash
+kee use <account_name>
+```
+
+Use an account and start a sub-shell with AWS credentials.
+
+### List all accounts
+
+```bash
+kee list
+```
+
+Show all configured accounts and their details.
+
+### Show current account
+
+```bash
+kee current
+```
+
+Display which account is currently active (if any).
+
+### Remove an account
+
+```bash
+kee remove <account_name>
+```
+
+Removes an account configuration from `Kee` and the AWS config file.
+
+## How It Works
+
+### Configuration storage
+
+- `Kee` stores its configuration in `~/.aws/kee.json`
+- AWS profiles are created in `~/.aws/config` with the naming pattern using `<account_name>`
+- No AWS credentials are stored - only SSO configuration
+
+### Sub-shell environment
+
+When you use an account, `Kee`:
+
+1. Validates SSO credentials (refreshes if needed)
+2. Updates shell prompt to show current account
+3. Starts a new shell session
+4. Cleans up when you exit
+
+### Session management
+
+`Kee` prevents you from starting a sub-shell while already in one:
+
+```bash
+(mycompany.dev) $ kee use mycompany.prod
+
+You already are in a Kee session for: mycompany.dev
+Exit the current session first by typing 'exit'
+```
+
+### Shell prompt integration
+
+Your shell prompt will show the active account:
+
+```bash
+(mycompany.dev) user@hostname:
+```
+
+## Environment variables
+
+When you're in a `Kee` session, the following environment variables are set:
+
+- `AWS_PROFILE` - The AWS profile name (e.g., `mycompany.dev`)
+- `KEE_CURRENT_ACCOUNT` - The `Kee` account name (e.g., `mycompany.dev`)
+- `KEE_ACTIVE_SESSION` - Set to `1` to indicate an active `Kee` session
+- `PS1` - Updated to show the current account in your prompt (Unix-like systems only)
+
+These variables help `Kee` manage sessions and prevent nested sub-shells.
+
+## Configuration files
+
+### Kee configuration (`~/.aws/kee.json`)
+
+```json
+{
+  "accounts": {
+    "mycompany-prod": {
+      "profile_name": "mycompany.dev",
+      "sso_start_url": "https://mycompany.awsapps.com/start",
+      "sso_region": "ap-southeast-2",
+      "sso_account_id": "123456789012",
+      "sso_role_name": "AdministratorAccess",
+      "session_name": "mycompany.dev"
+    }
+  },
+  "current_account": null
+}
+```
+
+### AWS config (`~/.aws/config`)
+
+```ini
+[profile mycompany.dev]
+sso_role_name = AdministratorAccess
+sso_session = mycompany
+sso_account_id = 123456789098
+output = json
+
+[sso-session mycompany]
+sso_region = ap-southeast-2
+sso_start_url = https://mycompany.awsapps.com/start
+sso_registration_scopes = sso:account:access
+```
 
 ## Cross-platform support
 
-**Identical support across:**
+`Kee` works on:
 
 - **macOS**: Full support with shell prompt integration
 - **Linux**: Full support with shell prompt integration
 - **Windows**: Full support (prompt integration not available)
 
-**Platform-specific optimizations:**
+## Troubleshooting
 
-- **Windows**: Uses `COMSPEC` for shell detection
-- **Unix**: Uses `SHELL` environment variable
-- **All**: Proper path handling with `std::path`
+### SSO login issues
 
-## Migration from the Python version
-
-**Zero migration required:**
-
-- Same configuration files (`~/.aws/kee.json`)
-- Same AWS config format
-- Same command-line interface
-- Same environment variables
-
-**Drop-in Replacement:**
+If SSO login fails:
 
 ```bash
-# Remove the Python version
-rm /usr/local/bin/kee
+# Manual SSO login
+aws sso login --profile <account_name>
 
-# Or via Pip
-pip uninstall kee
-
-# Install Rust version
-cargo install --path . --force
+# Then try using again
+kee use <account_name>
 ```
 
-## Future enhancements (specific to Rust)
+### Profile not found
+
+If you get "profile not found" errors:
+
+```bash
+# Check AWS config
+cat ~/.aws/config
+
+# Re-add the account if needed
+kee remove <account_name>
+kee add <account_name>
+```
+
+### Permission issues
+
+If you get permission errors:
+
+```bash
+# Check AWS credentials
+aws sts get-caller-identity --profile <account_name>
+
+# Refresh SSO login
+aws sso login --profile <account_name>
+```
+
+## Future enhancements
 
 - **Async AWS API calls** for faster credential validation
 - **Parallel account operations** for bulk management
@@ -183,8 +304,6 @@ cargo install --path . --force
 - **Configuration validation** at compile time
 - **Plugin system** with dynamic loading
 - **TUI interface** with real-time updates
-
-## Distribution
 
 **Binary distribution:**
 
@@ -195,25 +314,19 @@ cargo install --path . --force
 
 **Package managers:**
 
-- **Cargo**: `cargo install kee`
+- **Cargo**: `cargo install kee` (when published)
 - **Homebrew**: `brew install kee` (when published)
 - **Scoop**: `scoop install kee` (Windows, when published)
-- **APT/YUM**: Native packages possible
+- **APT/YUM**: Native packages possible (when published)
 
 ## Contributing
-
-Same contribution guidelines as Python version, plus:
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-**Rust-specific:**
-
-- Follow `rustfmt` formatting
-- Pass `clippy` lints
+4. Add tests, if applicable
+5. Test your changes: `make test`
+6. Submit a pull request
 
 > There is a utilities script which will set up a `pre-commit` hook to run some basic checks on your code before you commit.
 
