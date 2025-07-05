@@ -10,6 +10,7 @@ use std::process::Command;
 const BOLD_WHITE: &str = "\x1b[1;37m";
 const RESET: &str = "\x1b[0m";
 const KEE_ART: &str = r#"
+
     ██╗  ██╗███████╗███████╗
     ██║ ██╔╝██╔════╝██╔════╝
     █████╔╝ █████╗  █████╗
@@ -17,7 +18,7 @@ const KEE_ART: &str = r#"
     ██║  ██╗███████╗███████╗
     ╚═╝  ╚═╝╚══════╝╚══════╝
 
-    AWS CLI session manager"#;
+    AWS CLI profile manager"#;
 
 #[derive(Parser)]
 #[command(name = "kee")]
@@ -122,9 +123,8 @@ impl KeeManager {
             hlt("7.")
         );
         println!(
-            "\n {} When prompted for 'session name', use: {}\n",
-            hlt("Tip:"),
-            hlt(account_name)
+            "\n  {} A session can be liked to multiple profiles.\n  When prompted for a 'session name', use something generic, like your company name.\n",
+            hlt("Tip:")
         );
 
         // Run aws configure sso
@@ -138,7 +138,7 @@ impl KeeManager {
         }
 
         println!(
-            " {} You can ignore the AWS CLI example above. {} will handle profiles for you.",
+            "\n {} You can ignore the AWS CLI example above.\n {} will handle profiles for you.",
             hlt("Note:"),
             hlt("Kee")
         );
@@ -164,7 +164,7 @@ impl KeeManager {
 
         // Test the profile
         if self.check_credentials(profile_name) {
-            println!("\n [✓] The account was added and is working correctly! — I just tested it.");
+            println!("\n [✓] The profile was added and it's working!");
         } else {
             println!("\n [X] I created the profile but credentials may need a refresh...");
             println!(" {} aws sso login --profile {}", hlt("Try:"), profile_name);
@@ -242,7 +242,7 @@ impl KeeManager {
 
         if config.accounts.is_empty() {
             println!(
-                "\n No accounts configured. Use '{}' to add an account.",
+                "\n No accounts configured.\n Use '{}' to add an account.",
                 hlt("kee add <account_name>")
             );
             return;
@@ -251,7 +251,7 @@ impl KeeManager {
         println!();
         for (account_name, account_info) in &config.accounts {
             let status = if Some(account_name.as_str()) == config.current_account.as_deref() {
-                " (Current session)"
+                " (Current profile)"
             } else {
                 ""
             };
@@ -259,7 +259,6 @@ impl KeeManager {
             println!(" {}{}", hlt(account_name), status);
             println!(" • {} {}", hlt("Account:"), account_info.sso_account_id);
             println!(" • {} {}", hlt("Role:"), account_info.sso_role_name);
-            println!();
         }
     }
 
@@ -298,23 +297,14 @@ impl KeeManager {
 
         self.save_config(&config)?;
 
-        // Remove AWS profile and session
+        // Remove the AWS profile from config file
         let hlt_account = hlt(account_name);
         match self.remove_aws_profile(&account_info.profile_name) {
             Ok(_) => {
-                if !account_info.session_name.is_empty() {
-                    let _ = self.remove_sso_session(&account_info.session_name);
-                    println!(
-                        " [✓] Account '{hlt_account}', AWS profile '{hlt_account}', and SSO session '{hlt_account}' removed."
-                    );
-                } else {
-                    println!(
-                        " [✓] Account '{hlt_account}' and AWS profile '{hlt_account}' removed."
-                    );
-                }
+                println!(" [✓] Profile '{hlt_account}' has been removed.");
             }
             Err(e) => {
-                println!(" [✓] Account '{hlt_account}' removed from Kee.");
+                println!(" [✓] Profile '{hlt_account}' removed from {}.", hlt("Kee"));
                 println!(
                     " [!] {} Could not remove AWS profile '{}': {}",
                     hlt("Warning:"),
@@ -329,14 +319,14 @@ impl KeeManager {
     }
 
     fn use_account(&self, account_name: &str) -> io::Result<bool> {
-        // Check if already in a kee session
-        if env::var("KEE_ACTIVE_SESSION").is_ok() {
-            let current_session =
+        // Check if already in a Kee profile
+        if env::var("KEE_ACTIVE_PROFILE").is_ok() {
+            let current_profile =
                 env::var("KEE_CURRENT_ACCOUNT").unwrap_or_else(|_| "unknown".to_string());
             println!(
-                "\n You already are in a {} session for: {}",
+                "\n You are using a {} profile: {}",
                 hlt("Kee"),
-                hlt(&current_session)
+                hlt(&current_profile)
             );
             println!(
                 " Exit the current session first by typing '{}'",
@@ -398,7 +388,7 @@ impl KeeManager {
 
         // Check credentials
         if !self.check_credentials(profile_name) {
-            println!(" Credentials expired or not available. Attempting SSO login...");
+            println!("\n Credentials expired or not available. Attempting SSO login...");
             if !self.sso_login(profile_name)? {
                 println!(
                     " Failed to authenticate. Please run '{}' manually.",
@@ -425,13 +415,13 @@ impl KeeManager {
     fn current_account(&self) {
         // Check if in active session
         if let Ok(current) = env::var("KEE_CURRENT_ACCOUNT") {
-            println!("\n Current session: {}", hlt(&current));
+            println!("\n Current profile: {}", hlt(&current));
             println!(" Type '{}' to return to your main shell.", hlt("exit"));
         } else {
             let config = self.load_config();
             match config.current_account {
-                Some(current) => println!("\n Current account: {}", hlt(&current)),
-                None => println!("\n No account is currently active."),
+                Some(current) => println!("\n Current profile: {}", hlt(&current)),
+                None => println!("\n No profile is currently active."),
             }
         }
     }
@@ -466,22 +456,22 @@ impl KeeManager {
 
         // Show banner
         println!("{KEE_ART}");
-        println!("    Session: {}", hlt(account_name));
-        println!("\n    Starting a sub-shell for this session...");
+        println!("    Profile: {}", hlt(account_name));
+        println!("\n    Starting a sub-shell...");
         println!("    Type '{}' to return to your main shell.", hlt("exit"));
 
         // Start subshell with environment
         let mut cmd = Command::new(&shell);
         cmd.env("AWS_PROFILE", profile_name);
         cmd.env("KEE_CURRENT_ACCOUNT", account_name);
-        cmd.env("KEE_ACTIVE_SESSION", "1");
+        cmd.env("KEE_ACTIVE_PROFILE", "1");
 
         // Update PS1 for Unix-like systems
         if !cfg!(windows) {
             if let Ok(ps1) = env::var("PS1") {
-                cmd.env("PS1", format!("(kee:{account_name}) {ps1}"));
+                cmd.env("PS1", format!("aws:{account_name} {ps1}"));
             } else {
-                cmd.env("PS1", format!("(kee:{account_name}) $ "));
+                cmd.env("PS1", format!("aws:{account_name} $ "));
             }
         }
 
@@ -528,34 +518,6 @@ impl KeeManager {
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
         let section_name = format!("profile {profile_name}");
-        config.remove_section(&section_name);
-
-        let mut output = String::new();
-        for (section_name, section_map) in config.get_map_ref() {
-            output.push_str(&format!("[{section_name}]\n"));
-            for (key, value_opt) in section_map {
-                if let Some(value) = value_opt {
-                    output.push_str(&format!("{key} = {value}\n"));
-                }
-            }
-            output.push('\n');
-        }
-
-        fs::write(&self.aws_config_file, output)
-    }
-
-    fn remove_sso_session(&self, session_name: &str) -> io::Result<()> {
-        if !self.aws_config_file.exists() || session_name.is_empty() {
-            return Ok(());
-        }
-
-        let content = fs::read_to_string(&self.aws_config_file)?;
-        let mut config = configparser::ini::Ini::new();
-        config
-            .read(content)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-
-        let section_name = format!("sso-session {session_name}");
         config.remove_section(&section_name);
 
         let mut output = String::new();

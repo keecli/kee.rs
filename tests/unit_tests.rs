@@ -12,7 +12,7 @@ fn test_help_command() {
     let stdout = String::from_utf8(output.stdout).unwrap();
 
     // Check that help contains expected sections
-    assert!(stdout.contains("AWS CLI session manager"));
+    assert!(stdout.contains("AWS CLI profile manager"));
     assert!(stdout.contains("Commands:"));
     assert!(stdout.contains("add"));
     assert!(stdout.contains("use"));
@@ -53,7 +53,7 @@ fn test_current_command_no_session() {
     let stdout = String::from_utf8(output.stdout).unwrap();
 
     // Should show no active account
-    assert!(stdout.contains("No account is currently active"));
+    assert!(stdout.contains("No profile is currently active"));
 }
 
 #[test]
