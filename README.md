@@ -1,23 +1,26 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/keecli/kee.rs/refs/heads/main/kee.png" alt="Kee" />
+  <img src="https://raw.githubusercontent.com/aichholzer/kee/refs/heads/main/kee.png" alt="Kee" />
 </div>
 
 ![OSX](https://img.shields.io/badge/-OSX-black) ![OSX](https://img.shields.io/badge/-Linux-red) ![OSX](https://img.shields.io/badge/-Windows-blue)
 
-`Kee` creates isolated sub-shells for each AWS account, ensuring no credentials are stored locally while providing seamless account management.
+A simple tool to manage multiple AWS profiles with SSO support and easy access.
+
+`Kee` creates isolated sub-shells for each AWS profile, ensuring no credentials are stored locally while providing seamless management.
+
+> 🦀 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/aichholzer/kee.py).<br />
+> However, this version might not receive updates or new features.
 
 ## Features
 
 - 🔐 **SSO integration**: Full support for AWS SSO authentication
-- 🚀 **Easy account access**: Use any configured account with a single command
-- 🐚 **Sub-shell isolation**: Each account runs in its own sub-shell with proper credential isolation
-- 📝 **Custom aliases**: Use friendly names for your AWS accounts
-- 🔍 **Account management**: Easily list, add, and remove accounts
+- 🚀 **Easy profile access**: Use any configured profile with a single command
+- 🐚 **Sub-shell isolation**: Each profile runs in its own sub-shell with proper credential isolation
+- 📝 **Custom aliases**: Use friendly names for your AWS profiles
+- 🔍 **Profile management**: Easily list, add, and remove profiles
 - 🚫 **No stored credentials**: No AWS credentials are stored anywhere - uses AWS SSO tokens
-- 🎨 **Shell integration**: Shows current account in your shell prompt
+- 🎨 **Shell integration**: Shows current profile in your shell prompt
 - ⚡ **Auto-refresh**: Automatically handles SSO token refresh when needed
-
-🐍 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/keecli/kee.py).
 
 ## Security notes
 
@@ -88,7 +91,7 @@ cp target/release/kee ~/.local/bin/  # Make sure ~/.local/bin is in your PATH
 
 ## Quick Start
 
-### 1. Add Your First Account
+### 1. Add your first profile
 
 ```bash
 kee add mycompany.dev
@@ -104,7 +107,7 @@ This will:
 
 > **Tip:** A session can be liked to multiple profiles. When prompted for a 'session name', use something generic, like your company name.
 
-### 2. Use an Account
+### 2. Use a profile
 
 ```bash
 kee use mycompany.dev
@@ -115,11 +118,11 @@ This will:
 - Check if SSO credentials are valid
 - Automatically run `aws sso login` if needed
 - Start a sub-shell with AWS credentials configured
-- Update your shell prompt to show the active account
+- Update your shell prompt to show the active profile
 
 ### 3. Work with AWS
 
-Inside the sub-shell, all AWS CLI commands will use the selected account:
+Inside the sub-shell, all AWS CLI commands will use the selected profile's credentials:
 
 ```bash
 aws:mycompany.dev $ aws s3 ls
@@ -129,60 +132,60 @@ aws:mycompany.dev $ exit  # Terminate the session and return to your main shell
 
 ## Commands
 
-### Add an account
+### Add a profile
 
 ```bash
-kee add <account_name>
+kee add PROFILE_NAME
 ```
 
-Interactively configure a new AWS account with SSO settings.
+Interactively configure a new AWS profile with SSO settings.
 
-### Use an account
+### Use a profile
 
 ```bash
-kee use <account_name>
+kee use PROFILE_NAME
 ```
 
-Use an account and start a sub-shell with AWS credentials.
+Use a profile and start a sub-shell with its AWS credentials.
 
-### List all accounts
+### List all profiles
 
 ```bash
-kee list
+kee ls
 ```
 
-Show all configured accounts and their details.
+Show a quick overview of all configured profiles.
 
-### Show current account
+### Show current profile
 
 ```bash
 kee current
 ```
 
-Display which account is currently active (if any).
+Display which profile is currently active (if any).
 
-### Remove an account
+### Remove a profile
 
 ```bash
-kee remove <account_name>
+kee rm PROFILE_NAME
 ```
 
-Removes an account configuration from `Kee` and the AWS config file.
+Removes a profile configuration from `Kee` and the AWS config file.
 
 ## How It Works
 
 ### Configuration storage
 
-- `Kee` stores its configuration in `~/.aws/kee.json`
-- AWS profiles are created in `~/.aws/config` with the naming pattern using `<account_name>`
+- `Kee` stores its configuration in `~/.kee/config.json`
+- AWS profiles are created in `~/.aws/config`, following the AWS config pattern
 - No AWS credentials are stored - only SSO configuration
 
 ### Sub-shell environment
 
-When you use an account, `Kee`:
+When you use a profile, `Kee`:
 
 1. Validates SSO credentials (refreshes if needed)
-2. Updates shell prompt to show current account
+2. Updates shell prompt to show current profile
 3. Starts a new shell session
 4. Cleans up when you exit
 
@@ -199,7 +202,7 @@ Exit the current session first by typing 'exit'
 
 ### Shell prompt integration
 
-Your shell prompt will show the active account:
+Your shell prompt will show the active profile:
 
 ```bash
 (mycompany.dev) user@hostname:
@@ -210,19 +213,19 @@ Your shell prompt will show the active account:
 When you're using a `Kee` profile, the following environment variables are set:
 
 - `AWS_PROFILE` - The AWS profile name (e.g., `mycompany.dev`)
-- `KEE_CURRENT_ACCOUNT` - The `Kee` account name (e.g., `mycompany.dev`)
+- `KEE_CURRENT_PROFILE` - The current `Kee` profile name (e.g., `mycompany.dev`)
 - `KEE_ACTIVE_PROFILE` - Set to `1` to indicate an active `Kee` profile
-- `PS1` - Updated to show the current account in your prompt (Unix-like systems only)
+- `PS1` - Updated to show the current profile in your prompt (Unix-like systems only)
 
 These variables help `Kee` manage sessions and prevent nested sub-shells.
 
 ## Configuration files
 
-### Kee configuration (`~/.aws/kee.json`)
+### Kee configuration (`~/.kee/config.json`)
 
 ```json
 {
-  "accounts": {
+  "profiles": {
     "mycompany-prod": {
       "profile_name": "mycompany.dev",
       "sso_start_url": "https://mycompany.awsapps.com/start",
@@ -267,10 +270,10 @@ If SSO login fails:
 
 ```bash
 # Manual SSO login
-aws sso login --profile <account_name>
+aws sso login --profile PROFILE_NAME
 
 # Then try using again
-kee use <account_name>
+kee use PROFILE_NAME
 ```
 
 ### Profile not found
@@ -281,9 +284,9 @@ If you get "profile not found" errors:
 # Check AWS config
 cat ~/.aws/config
 
-# Re-add the account if needed
-kee remove <account_name>
-kee add <account_name>
+# Re-add the profile if needed
+kee rm PROFILE_NAME
+kee add PROFILE_NAME
 ```
 
 ### Permission issues
@@ -292,16 +295,16 @@ If you get permission errors:
 
 ```bash
 # Check AWS credentials
-aws sts get-caller-identity --profile <account_name>
+aws sts get-caller-identity --profile PROFILE_NAME
 
 # Refresh SSO login
-aws sso login --profile <account_name>
+aws sso login --profile PROFILE_NAME
 ```
 
 ## Future enhancements
 
 - **Async AWS API calls** for faster credential validation
-- **Parallel account operations** for bulk management
+- **Parallel profile operations** for bulk management
 - **Built-in AWS SDK** integration (no AWS CLI dependency)
 - **Configuration validation** at compile time
 - **Plugin system** with dynamic loading
@@ -343,7 +346,7 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-RTFM, then RTFC... If you are still stuck or just need an additional feature, file an [issue](https://github.com/KeeCLI/kee.py/issues).
+RTFM, then RTFC... If you are still stuck or just need an additional feature, file an [issue](https://github.com/aichholzer/kee/issues).
 
 <div align="center">
 ✌🏼

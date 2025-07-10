@@ -1,5 +1,5 @@
 #!/bin/bash
-# Kee — Rust Installation Script
+# Kee — Installation script
 
 set -e
 
@@ -8,11 +8,10 @@ BOLD_WHITE="\033[1;37m"
 RESET="\033[0m"
 
 echo ""
-echo -e " Installing ${BOLD_WHITE}Kee${RESET} (Rust)..."
-echo ""
+echo -e " Installing ${BOLD_WHITE}Kee${RESET}..."
 
 # Install the binary
-cargo install --path .
+cargo install --path . --quiet
 
 # Detect shell and add to PATH if not already present
 CARGO_BIN="$HOME/.cargo/bin"
@@ -62,32 +61,40 @@ case "$SHELL" in
         ;;
 esac
 
+
+# Install shell auto-completion
+if [[ -f "./scripts/install-auto-complete.sh" ]]; then
+    ./scripts/install-auto-complete.sh
+else
+    echo " [!] Auto-completion installation script not found."
+    echo "     Manually install with: ./scripts/install-auto-complete.sh"
+fi
+
 echo ""
-echo -e " 🦀 ${BOLD_WHITE}Kee${RESET} was installed successfully!"
+echo -e " [✓] ${BOLD_WHITE}Kee${RESET} was installed successfully!"
 
 # Check if .cargo/bin is currently in PATH or if kee command is available
 if command -v kee >/dev/null 2>&1 || [[ ":$PATH:" == *":$HOME/.cargo/bin:"* ]] || [[ ":$PATH:" == *":.cargo/bin:"* ]]; then
-    echo -e " ${BOLD_WHITE}Kee${RESET} is ready for you. Type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
+    echo -e "     ${BOLD_WHITE}Kee${RESET} is ready for you. Type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
 elif [[ "$PATH_ALREADY_CONFIGURED" == true ]]; then
-    echo " Restart your terminal or run:"
+    SOURCE=""
     case "$SHELL" in
         */zsh)
-            echo "   source ~/.zshrc"
+            SOURCE="source ~/.zshrc"
             ;;
         */bash)
-            echo "   source ~/.bashrc"
+            SOURCE="source ~/.bashrc"
             ;;
         */fish)
-            echo "   source ~/.config/fish/config.fish"
+            SOURCE="source ~/.config/fish/config.fish"
             ;;
         *)
-            echo "   source your shell's config file"
+            SOURCE="source your shell's config file."
             ;;
     esac
-    echo -e " Then type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
+    echo -e "     Restart your terminal or run: ${SOURCE}"
+    echo -e "     Then type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
 else
-    echo " Restart your terminal or run:"
-    echo "   source ~/.zshrc  # (or your shell's config file)"
-    echo -e " Then type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
+    echo -e "     Restart your terminal or run: ${BOLD_WHITE}source ~/.zshrc${RESET}"
+    echo -e "     Then type: ${BOLD_WHITE}kee add <account>${RESET} to add your first account."
 fi
-echo ""

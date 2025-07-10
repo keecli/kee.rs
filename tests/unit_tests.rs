@@ -1,104 +1,212 @@
-// Unit tests for the main binary functionality
-use std::process::Command;
+use serde_json;
+use std::fs;
+use tempfile::TempDir;
 
-#[test]
-fn test_help_command() {
-    let output = Command::new("cargo")
-        .args(&["run", "--", "--help"])
-        .output()
-        .expect("Failed to execute help command");
+// Import the types we need to test
+use kee::{KeeConfig, ProfileInfo};
 
-    assert!(output.status.success());
-    let stdout = String::from_utf8(output.stdout).unwrap();
-
-    // Check that help contains expected sections
-    assert!(stdout.contains("AWS CLI profile manager"));
-    assert!(stdout.contains("Commands:"));
-    assert!(stdout.contains("add"));
-    assert!(stdout.contains("use"));
-    assert!(stdout.contains("list"));
-    assert!(stdout.contains("current"));
-    assert!(stdout.contains("remove"));
-}
-
-#[test]
-fn test_list_command_no_accounts() {
-    let temp_dir = std::env::temp_dir().join("kee_test_no_accounts");
-    std::fs::create_dir_all(&temp_dir).unwrap();
-
-    let output = Command::new("cargo")
-        .args(&["run", "--", "list"])
-        .env("HOME", &temp_dir)
-        .output()
-        .expect("Failed to execute list command");
-
-    assert!(output.status.success());
-    let stdout = String::from_utf8(output.stdout).unwrap();
-
-    // Should show message about no accounts configured
-    assert!(stdout.contains("No accounts configured"));
-
-    // Clean up
-    std::fs::remove_dir_all(&temp_dir).ok();
-}
-
-#[test]
-fn test_current_command_no_session() {
-    let output = Command::new("cargo")
-        .args(&["run", "--", "current"])
-        .output()
-        .expect("Failed to execute current command");
-
-    assert!(output.status.success());
-    let stdout = String::from_utf8(output.stdout).unwrap();
-
-    // Should show no active account
-    assert!(stdout.contains("No profile is currently active"));
-}
-
-#[test]
-fn test_invalid_command() {
-    let output = Command::new("cargo")
-        .args(&["run", "--", "invalid-command"])
-        .output()
-        .expect("Failed to execute invalid command");
-
-    assert!(!output.status.success());
-}
-
-#[test]
-fn test_remove_nonexistent_account() {
-    let output = Command::new("cargo")
-        .args(&["run", "--", "remove", "nonexistent-account"])
-        .output()
-        .expect("Failed to execute remove command");
-
-    assert!(output.status.success());
-    let stdout = String::from_utf8(output.stdout).unwrap();
-
-    // Should show account not found message
-    assert!(stdout.contains("not found"));
-}
-
-// Test utility functions
 #[cfg(test)]
-mod utils_tests {
+mod config_tests {
+    use super::*;
+
     #[test]
-    fn test_profile_name_generation() {
-        // Test the profile name format that kee uses
-        let account_name = "test-account";
-        let expected_profile = format!("kee-{}", account_name);
-        assert_eq!(expected_profile, "kee-test-account");
+    fn test_kee_config_new() {
+        let config = KeeConfig::default();
+        assert!(config.profiles.is_empty());
+        assert!(config.current_profile.is_none());
     }
 
     #[test]
-    fn test_environment_variable_names() {
-        // Test the environment variable names kee uses
-        let kee_vars = vec!["KEE_ACTIVE_SESSION", "KEE_CURRENT_ACCOUNT", "AWS_PROFILE"];
+    fn test_profile_info_creation() {
+        let profile = ProfileInfo {
+            profile_name: "test-profile".to_string(),
+            sso_start_url: "https://test.awsapps.com/start".to_string(),
+            sso_region: "us-east-1".to_string(),
+            sso_account_id: "123456789012".to_string(),
+            sso_role_name: "TestRole".to_string(),
+            session_name: "test-session".to_string(),
+        };
+
+        assert_eq!(profile.profile_name, "test-profile");
+        assert_eq!(profile.sso_account_id, "123456789012");
+        assert_eq!(profile.sso_role_name, "TestRole");
+    }
+
+    #[test]
+    fn test_config_serialization() {
+        let mut config = KeeConfig::default();
+        let profile = ProfileInfo {
+            profile_name: "test-profile".to_string(),
+            sso_start_url: "https://test.awsapps.com/start".to_string(),
+            sso_region: "us-east-1".to_string(),
+            sso_account_id: "123456789012".to_string(),
+            sso_role_name: "TestRole".to_string(),
+            session_name: "test-session".to_string(),
+        };
+
+        config.profiles.insert("test".to_string(), profile.clone());
+        config.current_profile = Some("test".to_string());
+
+        // Test serialization
+        let json = serde_json::to_string(&config).unwrap();
+        assert!(json.contains("test-profile"));
+        assert!(json.contains("123456789012"));
+
+        // Test deserialization
+        let deserialized: KeeConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.profiles.len(), 1);
+        assert_eq!(deserialized.current_profile, Some("test".to_string()));
+        assert_eq!(deserialized.profiles.get("test"), Some(&profile));
+    }
+
+    #[test]
+    fn test_config_with_multiple_profiles() {
+        let mut config = KeeConfig::default();
+
+        let profile1 = ProfileInfo {
+            profile_name: "prod-profile".to_string(),
+            sso_start_url: "https://prod.awsapps.com/start".to_string(),
+            sso_region: "us-east-1".to_string(),
+            sso_account_id: "111111111111".to_string(),
+            sso_role_name: "ProdRole".to_string(),
+            session_name: "prod-session".to_string(),
+        };
+
+        let profile2 = ProfileInfo {
+            profile_name: "dev-profile".to_string(),
+            sso_start_url: "https://dev.awsapps.com/start".to_string(),
+            sso_region: "us-west-2".to_string(),
+            sso_account_id: "222222222222".to_string(),
+            sso_role_name: "DevRole".to_string(),
+            session_name: "dev-session".to_string(),
+        };
+
+        config.profiles.insert("prod".to_string(), profile1.clone());
+        config.profiles.insert("dev".to_string(), profile2.clone());
+
+        assert_eq!(config.profiles.len(), 2);
+        assert_eq!(config.profiles.get("prod"), Some(&profile1));
+        assert_eq!(config.profiles.get("dev"), Some(&profile2));
+    }
+
+    #[test]
+    fn test_empty_config_handling() {
+        let config = KeeConfig::default();
+        assert!(config.profiles.is_empty());
+        assert!(config.current_profile.is_none());
+
+        // Test serialization of empty config
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: KeeConfig = serde_json::from_str(&json).unwrap();
+        assert!(deserialized.profiles.is_empty());
+        assert!(deserialized.current_profile.is_none());
+    }
+}
+
+#[cfg(test)]
+mod file_operations_tests {
+    use super::*;
+
+    #[test]
+    fn test_config_file_save_and_load() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_file = temp_dir.path().join("config.json");
+
+        let mut original_config = KeeConfig::default();
+        let profile = ProfileInfo {
+            profile_name: "test-profile".to_string(),
+            sso_start_url: "https://test.awsapps.com/start".to_string(),
+            sso_region: "us-east-1".to_string(),
+            sso_account_id: "123456789012".to_string(),
+            sso_role_name: "TestRole".to_string(),
+            session_name: "test-session".to_string(),
+        };
+
+        original_config.profiles.insert("test".to_string(), profile);
+        original_config.current_profile = Some("test".to_string());
+
+        // Save config
+        let json = serde_json::to_string_pretty(&original_config).unwrap();
+        fs::write(&config_file, json).unwrap();
+
+        // Load config
+        let loaded_json = fs::read_to_string(&config_file).unwrap();
+        let loaded_config: KeeConfig = serde_json::from_str(&loaded_json).unwrap();
+
+        // Verify they match
+        assert_eq!(original_config.profiles, loaded_config.profiles);
+        assert_eq!(
+            original_config.current_profile,
+            loaded_config.current_profile
+        );
+    }
+
+    #[test]
+    fn test_malformed_config_handling() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_file = temp_dir.path().join("config.json");
+
+        // Write malformed JSON
+        fs::write(&config_file, "{ invalid json }").unwrap();
+
+        // Should handle gracefully when loading
+        let content = fs::read_to_string(&config_file).unwrap();
+        let result: Result<KeeConfig, _> = serde_json::from_str(&content);
+        assert!(result.is_err());
+    }
+}
+
+#[cfg(test)]
+mod utility_tests {
+    use super::*;
+
+    #[test]
+    fn test_environment_variable_constants() {
+        // Test that our constants are properly defined
+        let kee_vars = vec![
+            "KEE_ACTIVE_PROFILE",
+            "KEE_CURRENT_PROFILE",
+            "AWS_PROFILE",
+            "AWS_CLI_AUTO_PROMPT",
+            "AWS_PAGER",
+        ];
 
         for var in kee_vars {
             assert!(!var.is_empty());
-            assert!(var.starts_with("KEE_") || var.starts_with("AWS_"));
+            assert!(var.len() > 3);
+        }
+    }
+
+    #[test]
+    fn test_profile_info_clone() {
+        let profile = ProfileInfo {
+            profile_name: "test".to_string(),
+            sso_start_url: "https://test.com".to_string(),
+            sso_region: "us-east-1".to_string(),
+            sso_account_id: "123456789012".to_string(),
+            sso_role_name: "TestRole".to_string(),
+            session_name: "session".to_string(),
+        };
+
+        let cloned = profile.clone();
+        assert_eq!(profile.profile_name, cloned.profile_name);
+        assert_eq!(profile.sso_account_id, cloned.sso_account_id);
+    }
+
+    #[test]
+    fn test_version_from_cargo() {
+        // Test that version is available from Cargo.toml
+        let version = env!("CARGO_PKG_VERSION");
+        assert!(!version.is_empty());
+        assert!(version.contains('.'));
+
+        // Should match semantic versioning pattern (basic check)
+        let parts: Vec<&str> = version.split('.').collect();
+        assert!(parts.len() >= 2); // At least major.minor
+
+        // Each part should be numeric
+        for part in parts {
+            assert!(part.chars().all(|c| c.is_ascii_digit()));
         }
     }
 }

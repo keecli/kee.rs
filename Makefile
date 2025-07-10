@@ -1,4 +1,4 @@
-.PHONY: test test-verbose test-unit test-integration build build-release install clean lint format check help
+.PHONY: test test-verbose test-unit test-integration build build-release install install-completions uninstall-completions clean lint format check help
 
 # Build debug version
 build:
@@ -8,9 +8,18 @@ build:
 build-release:
 	cargo build --release
 
-# Install locally
+# Install shell completions
+install-completions:
+	./scripts/install-completions.sh
+
+# Uninstall shell completions
+uninstall-completions:
+	./scripts/uninstall-completions.sh
+
+# Install locally (includes completions)
 install:
-	cargo install --path .
+	cargo install --path . --quiet
+	./scripts/install-completions.sh
 
 # Run all tests
 test:
@@ -91,6 +100,8 @@ help:
 	@echo "  build             - Build debug version"
 	@echo "  build-release     - Build release version"
 	@echo "  install           - Install locally"
+	@echo "  install-completions - Install shell completions"
+	@echo "  uninstall-completions - Uninstall shell completions"
 	@echo "  test              - Run all tests"
 	@echo "  test-verbose      - Run tests with verbose output"
 	@echo "  test-unit         - Run only unit tests"
