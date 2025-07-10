@@ -1,10 +1,13 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/keecli/kee.rs/refs/heads/main/kee.png" alt="Kee" />
+  <img src="https://raw.githubusercontent.com/aichholzer/kee/refs/heads/main/kee.png" alt="Kee" />
 </div>
 
 ![OSX](https://img.shields.io/badge/-OSX-black) ![OSX](https://img.shields.io/badge/-Linux-red) ![OSX](https://img.shields.io/badge/-Windows-blue)
 
 `Kee` creates isolated sub-shells for each AWS account, ensuring no credentials are stored locally while providing seamless account management.
+
+> 🦀 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/aichholzer/kee.py).<br />
+> However, this version might not receive updates or new features.
 
 ## Features
 
@@ -16,8 +19,6 @@
 - 🚫 **No stored credentials**: No AWS credentials are stored anywhere - uses AWS SSO tokens
 - 🎨 **Shell integration**: Shows current account in your shell prompt
 - ⚡ **Auto-refresh**: Automatically handles SSO token refresh when needed
-
-🐍 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/keecli/kee.py).
 
 ## Security notes
 
@@ -343,7 +344,7 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-RTFM, then RTFC... If you are still stuck or just need an additional feature, file an [issue](https://github.com/KeeCLI/kee.py/issues).
+RTFM, then RTFC... If you are still stuck or just need an additional feature, file an [issue](https://github.com/aichholzer/kee/issues).
 
 <div align="center">
 ✌🏼
