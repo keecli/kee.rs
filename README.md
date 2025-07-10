@@ -4,6 +4,8 @@
 
 ![OSX](https://img.shields.io/badge/-OSX-black) ![OSX](https://img.shields.io/badge/-Linux-red) ![OSX](https://img.shields.io/badge/-Windows-blue)
 
+A simple tool to manage multiple AWS accounts with SSO support and easy account access.
+
 `Kee` creates isolated sub-shells for each AWS account, ensuring no credentials are stored locally while providing seamless account management.
 
 > 🦀 — In case you are looking for an alternative, check out the **Python** [implementation](https://github.com/aichholzer/kee.py).<br />
