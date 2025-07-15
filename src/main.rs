@@ -411,7 +411,7 @@ impl KeeManager {
 
         // Show banner
         println!("\n Profile: {}", hlt(profile_name));
-        println!(" Starting a sub-shell...");
+        println!(" {} is starting a sub-shell...", hlt("Kee"));
         println!(" Type {} to return to your main shell.", hlt("exit"));
 
         // Start subshell with environment
