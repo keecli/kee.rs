@@ -1,0 +1,74 @@
+#compdef kee
+
+_kee() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  # Check current word position
+  case $CURRENT in
+    2)
+      # First argument - show commands
+      local -a commands
+      commands=(
+        'add:Add a new AWS account'
+        'use:Use an account'
+        'ls:List all configured accounts'
+        'current:Show current active account'
+        'rm:Remove an account'
+      )
+      _describe 'commands' commands
+      ;;
+    3)
+      # Second argument - depends on the command
+      case ${words[2]} in
+        use|rm)
+          # Get real account names from kee
+          local -a accounts
+          local account_output
+          account_output=$(kee ls --names 2>/dev/null)
+          
+          # Convert output to array, filtering out error messages
+          while IFS= read -r line; do
+            if [[ -n "$line" && "$line" != *"No accounts"* && "$line" != *"Use 'kee"* ]]; then
+              accounts+=("$line")
+            fi
+          done <<< "$account_output"
+          
+          if (( ${#accounts[@]} > 0 )); then
+            _values 'accounts' "${accounts[@]}"
+          else
+            _message 'no accounts configured'
+          fi
+          ;;
+        add)
+          _message 'account name'
+          ;;
+        ls)
+          # Handle --names flag for ls command
+          _arguments \
+            '--names[Only show account names]'
+          ;;
+        current)
+          # No arguments for current command
+          return 0
+          ;;
+      esac
+      ;;
+    *)
+      # No more completions after the second argument for most commands
+      case ${words[2]} in
+        ls)
+          # ls can have flags, so continue with argument completion
+          _arguments \
+            '--names[Only show account names]'
+          ;;
+        *)
+          # For all other commands, no more completions
+          return 0
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_kee "$@"
